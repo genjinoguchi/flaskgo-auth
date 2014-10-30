@@ -1,5 +1,5 @@
-from Flask import flask, redirect, render_template, request
-import pygoogle
+from flask import Flask, redirect, render_template, request
+import pymongo
 
 app = Flask(__name__)
 app.config.from_object(__name__)
