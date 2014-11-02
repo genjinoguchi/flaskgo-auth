@@ -1,29 +1,83 @@
-from flask import Flask, redirect, render_template, request, make_response
-import pymongo
+from flask import Flask, redirect, render_template, request, make_response, abort
+from pymongo import MongoClient
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+client = MongoClient("mongodb://localhost:5000")
 
-@app.route("/") #Register page, login page, 
+
+@app.route("/") #info page.
 def index():
     return render_template("index.html")
 
-@app.route("/new-user",methods=["GET","POST"]):
-def create():
-	if request.method == "GET":
+@app.route("/home") #must be logged in to view this page
+def home():
+    username = request.cookies.get('username')
+    password = request.cookies.get('password')
 
-		resp = make_response(render_template("index.html")) #Send the "create new user" page
+    authenticated = False
+    
+    #Authenticate using mongodb
+    
+    if authenticated:
+        return render_template("home.html")
+    else:
+        return redirect("http://localhost:5000/login-register",error="You need to be logged in to view this page.")
+    
 
-	if request.method == "POST": #look for post requests of new users
-		username = request.form["username"]
-		password = request.form["password"]
-		school = request.form["school"]
-		grade = request.form["grade"]
 
-		#Store it in mongo
+@app.route("/login-register",methods=["GET","POST"])
+def login_register():
+    if request.method == "GET":
+        return render_template("login-register.html",error="")
 
-		#Send the response page
+@app.route("/register",methods=["GET","POST"])
+def register():
+    if request.method == "GET":
+        return redirect("http://localhost:5000/login-register")
+    if request.method == "POST": #look for post requests of new users
+        username = request.form["username"]
+        password = request.form["password"]
+
+        error = ""
+        #Store the information in mongo
+
+        if error=="":
+            resp = make_response(redirect("http://localhost:5000/home"))
+            resp.set_cookie("username",username)
+            resp.set_cookie("password",password) #such hackable
+            return resp
+        else:
+            return render_template("login-register.html",error=error)
+
+
+@app.route("/login",methods=["GET","POST"])
+def login():
+    if request.method == "GET":
+        return redirect("http://localhost:5000/login-register")
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        error = ""
+        #Verify information with mongo. If there is an error, set error to a string describing it.
+
+        if error=="":
+            resp = make_response(redirect("http://localhost:5000/home"))
+            resp.set_cookie("username",username)
+            resp.set_cookie("password",password)
+            return resp
+        else:
+            return render_template("login-register.html",error=error)
+
+
+@app.route("/logout")
+def logout():
+    resp = make_response(render_template("login-register.html",error="You have successfully logged out."))
+    resp.set_cookie("username","")
+    resp.set_cookie("password","")
+    return resp
 
 
 if __name__ == "__main__":
