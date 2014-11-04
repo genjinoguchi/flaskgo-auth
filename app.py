@@ -4,9 +4,10 @@ from pymongo import MongoClient
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-client = MongoClient("mongodb://localhost:5000")
-
-
+#client = MongoClient("mongodb://localhost:5000")
+client = MongoClient()
+db = client.coll
+users=db.users
 @app.route("/") #info page.
 def index():
     return render_template("index.html")
@@ -17,14 +18,15 @@ def home():
     password = request.cookies.get('password')
 
     authenticated = False
-    
+
     #Authenticate using mongodb
-    
+    if (users.find({"user": username,"pass":pass}).count()==1):
+        authenticated=True
     if authenticated:
         return render_template("home.html")
     else:
         return redirect("http://localhost:5000/login-register",error="You need to be logged in to view this page.")
-    
+
 
 
 @app.route("/login-register",methods=["GET","POST"])
@@ -42,7 +44,10 @@ def register():
 
         error = ""
         #Store the information in mongo
-
+        if (users.find({"user": username,"pass":pass}).count()==0):
+            users.insert({"user":username,"pass":password})
+        else:
+            error="You already have an account."
         if error=="":
             resp = make_response(redirect("http://localhost:5000/home"))
             resp.set_cookie("username",username)
@@ -62,7 +67,8 @@ def login():
 
         error = ""
         #Verify information with mongo. If there is an error, set error to a string describing it.
-
+        if !(users.find({"user": username,"pass":pass}).count()==1):
+            error="Can't find your username or password."
         if error=="":
             resp = make_response(redirect("http://localhost:5000/home"))
             resp.set_cookie("username",username)
