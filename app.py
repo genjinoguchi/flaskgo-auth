@@ -4,7 +4,7 @@ from pymongo import MongoClient
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-client = MongoClient("mongodb://localhost:5000")
+#client = MongoClient("mongodb://localhost:5000")
 
 
 @app.route("/") #info page.
@@ -23,11 +23,11 @@ def home():
     if authenticated:
         return render_template("home.html")
     else:
-        return redirect("http://localhost:5000/login-register",error="You need to be logged in to view this page.")
+        return render_template("login-register.html",error="You need to be logged in to view this page.")
     
 
 
-@app.route("/login-register",methods=["GET","POST"])
+@app.route("/login-register")
 def login_register():
     if request.method == "GET":
         return render_template("login-register.html",error="")
@@ -39,7 +39,8 @@ def register():
     if request.method == "POST": #look for post requests of new users
         username = request.form["username"]
         password = request.form["password"]
-
+        email = request.form["email"]
+        
         error = ""
         #Store the information in mongo
 
