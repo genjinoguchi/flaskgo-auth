@@ -1,15 +1,14 @@
 from flask import Flask, redirect, render_template, request, make_response, abort
-from pymongo import MongoClient
+from pymongo import Connection
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-#client = MongoClient("mongodb://localhost:5000")
 
+conn = Connection()
+db = conn["zabariistheman"]
+print "db init"
 
-client = MongoClient()
-db = client.coll
-users=db.users
 
 
 @app.route("/") #info page.
@@ -21,14 +20,14 @@ def home():
     username = request.cookies.get('username')
     password = request.cookies.get('password')
 
-    authenticated = False
+    authenticated = ""
 
     #Authenticate using mongodb
-    if (users.find({"user": username,"pass":pass}).count()==1):
-        authenticated=True
+    if db.users.find({"username": username,"password":password}).count()==1:
+        authenticated=db.users.find({"username": username,"password":password})[0]["username"]
 
     if authenticated:
-        return render_template("home.html")
+        return render_template("home.html",loggedin="logged in as: "+authenticated)
     else:
         return render_template("login-register.html",error="You need to be logged in to view this page.")
     
@@ -50,10 +49,12 @@ def register():
         
         error = ""
         #Store the information in mongo
-        if (users.find({"user": username,"pass":pass}).count()==0):
-            users.insert({"user":username,"pass":password})
+        if (db.users.find({"username": username,"password":password}).count()==0):
+            db.users.insert({"username":username,"password":password})
+            print "username: "+username
+            print "password: "+password
         else:
-            error="You already have an account."
+            error="There is already an account under this username."
         if error=="":
             resp = make_response(redirect("http://localhost:5000/home"))
             resp.set_cookie("username",username)
@@ -73,8 +74,8 @@ def login():
 
         error = ""
         #Verify information with mongo. If there is an error, set error to a string describing it.
-        if !(users.find({"user": username,"pass":pass}).count()==1):
-            error="Can't find your username or password."
+        if not db.users.find({"username": username,"password":password}).count()==1:
+            error="Invalid username or password."
         if error=="":
             resp = make_response(redirect("http://localhost:5000/home"))
             resp.set_cookie("username",username)
