@@ -15,7 +15,7 @@ print "db init"
 def index():
     return render_template("index.html")
 
-@app.route("/home") #must be logged in to view this page
+@app.route("/home")
 def home():
     username = request.cookies.get('username')
     password = request.cookies.get('password')
@@ -24,13 +24,13 @@ def home():
 
     #Authenticate using mongodb
     if db.users.find({"username": username,"password":password}).count()==1:
-        authenticated=db.users.find({"username": username,"password":password})[0]["username"]
+       authenticated=db.users.find({"username": username,"password":password})[0]["username"]
 
     if authenticated:
-        return render_template("home.html",loggedin="logged in as: "+authenticated)
+        return render_template("home.html", loggedin="logged in as: "+authenticated)
     else:
-        return render_template("login-register.html",error="You need to be logged in to view this page.")
-    
+        return render_template("home.html",error="You need to be logged in to view this page.")
+
 
 
 @app.route("/login-register")
@@ -46,7 +46,7 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
         email = request.form["email"]
-        
+
         error = ""
         #Store the information in mongo
         if (db.users.find({"username": username,"password":password}).count()==0):
@@ -87,11 +87,70 @@ def login():
 
 @app.route("/logout")
 def logout():
-    resp = make_response(render_template("login-register.html",error="You have successfully logged out."))
+    resp = make_response(render_template("logout.html",error="You have successfully logged out."))
     resp.set_cookie("username","")
     resp.set_cookie("password","")
     return resp
 
+@app.route("/other")
+def other():
+    username = request.cookies.get('username')
+    password = request.cookies.get('password')
+
+    authenticated = ""
+
+    #Authenticate using mongodb
+    if db.users.find({"username": username,"password":password}).count()==1:
+        authenticated=db.users.find({"username": username,"password":password})[0]["username"]
+    if authenticated:
+        cursor=db.users.find()
+        #for x in cursor:
+        #    print x['username']
+        return render_template("other.html",loggedin="logged in as: "+authenticated,dicti=cursor)
+    else:
+        return redirect("http://localhost:5000/login-register")
+
+
+@app.route("/profile",methods=["GET","POST"])
+def profile():
+    if request.method == "GET":
+        username = request.cookies.get('username')
+        password = request.cookies.get('password')
+
+        authenticated = ""
+
+        #Authenticate using mongodb
+        if db.users.find({"username": username,"password":password}).count()==1:
+            authenticated=db.users.find({"username": username,"password":password})[0]["username"]
+
+        if authenticated:
+            return render_template("profile.html",loggedin="logged in as: "+authenticated)
+        else:
+            return redirect("http://localhost:5000/login-register")
+    if request.method == "POST":
+        username = request.cookies.get('username')
+        password = request.cookies.get('password')
+
+        authenticated = ""
+
+        #Authenticate using mongodb
+        if db.users.find({"username": username,"password":password}).count()==1:
+            authenticated=db.users.find({"username": username,"password":password})[0]["username"]
+
+        if not authenticated:
+            return redirect("http://localhost:5000/login-register")
+        password = request.form["password"]
+        if len(password)>1:
+            db.users.update({"username":username,"password":password},{ "$set": { "password": password } })
+        name=request.form["name"]
+        if len(name)>1:
+            db.users.update({"username":username,"password":password},{ "$set": { "name": name } })
+        state=request.form["state"]
+        db.users.update({"username":username,"password":password},{ '$set': { "state": state } })
+        email=request.form["email"]
+        if len(email)>1:
+            db.users.update({"username":username,"password":password},{ "$set": { "email": email } })
+        return render_template("profile.html",loggedin="logged in as: "+authenticated)
 
 if __name__ == "__main__":
     app.debug=True
