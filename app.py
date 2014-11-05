@@ -142,15 +142,22 @@ def profile():
         password = request.form["password"]
         if len(password)>1:
             db.users.update({"username":username,"password":password},{ "$set": { "password": password } })
+        else:
+            password = request.cookies.get('password')
         name=request.form["name"]
         if len(name)>1:
             db.users.update({"username":username,"password":password},{ "$set": { "name": name } })
         state=request.form["state"]
-        db.users.update({"username":username,"password":password},{ '$set': { "state": state } })
+        if len(state>1):
+            db.users.update({"username":username,"password":password},{ '$set': { "state": state } })
         email=request.form["email"]
         if len(email)>1:
             db.users.update({"username":username,"password":password},{ "$set": { "email": email } })
-        return render_template("profile.html",loggedin="logged in as: "+authenticated)
+        resp = make_response(render_template("profile.html",loggedin="logged in as: "+authenticated))
+        resp.set_cookie("username",username)
+        resp.set_cookie("password",)
+        return resp
+        #return render_template("profile.html",loggedin="logged in as: "+authenticated)
 
 if __name__ == "__main__":
     app.debug=True
