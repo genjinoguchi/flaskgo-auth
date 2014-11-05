@@ -4,21 +4,21 @@
 
 {% block content %}
 
-    <form class="pure-form pure-form-stacked" method="POST" action="http://localhost:5000/profile">
+    <form class="pure-form pure-form-stacked" method="POST" action="/profile">
     <fieldset>
         <legend>Your Info</legend>
 
         <label for="email">Email</label>
-        <input id="email" type="email" placeholder="Email">
+        <input name="email" type="email" placeholder="Email">
 
         <label for="password">Password</label>
-        <input id="password" type="password" placeholder="Password">
+        <input name="password" type="password" placeholder="Password">
 
         <label for="name">Name</label>
-        <input id="name" type="text" placeholder="Name">
+        <input name="name" type="text" placeholder="Name">
 
         <label for="state">State</label>
-        <select id="state">
+        <select name="state">
             <option>NY</option>
             <option>NJ</option>
             <option>PA</option>

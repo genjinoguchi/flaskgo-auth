@@ -127,30 +127,42 @@ def profile():
             return render_template("profile.html",loggedin="logged in as: "+authenticated)
         else:
             return redirect("http://localhost:5000/login-register")
+
+
     if request.method == "POST":
         username = request.cookies.get('username')
         password = request.cookies.get('password')
+        print "username: "+username
+        print "password: "+password
 
         authenticated = ""
-
         #Authenticate using mongodb
         if db.users.find({"username": username,"password":password}).count()==1:
             authenticated=db.users.find({"username": username,"password":password})[0]["username"]
 
         if not authenticated:
             return redirect("http://localhost:5000/login-register")
-        password = request.form["password"]
-        if len(password)>1:
-            db.users.update({"username":username,"password":password},{ "$set": { "password": password } })
-        name=request.form["name"]
-        if len(name)>1:
-            db.users.update({"username":username,"password":password},{ "$set": { "name": name } })
-        state=request.form["state"]
-        db.users.update({"username":username,"password":password},{ '$set': { "state": state } })
-        email=request.form["email"]
-        if len(email)>1:
-            db.users.update({"username":username,"password":password},{ "$set": { "email": email } })
-        return render_template("profile.html",loggedin="logged in as: "+authenticated)
+        else:
+            if len(request.form["password"])>1:
+                password = request.form["password"]
+                db.users.update({"username":username,"password":password},{ "$set": { "password": password } })
+                
+            name=request.form["name"]
+            if len(name)>1:
+                db.users.update({"username":username,"password":password},{ "$set": { "name": name } })
+                    
+            state=request.form["state"]
+            if len(state)>1:
+                db.users.update({"username":username,"password":password},{ '$set': { "state": state } })
+                    
+            email=request.form["email"]
+            if len(email)>1:
+                db.users.update({"username":username,"password":password},{ "$set": { "email": email } })
+              
+            resp = make_response(redirect("http://localhost:5000/home"))
+            resp.set_cookie("password",password)
+            return resp
+            #return render_template("profile.html",loggedin="logged in as: "+authenticated)
 
 if __name__ == "__main__":
     app.debug=True
